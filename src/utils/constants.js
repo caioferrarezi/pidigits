@@ -1,3 +1,5 @@
+export const DATE = (new Date()).toDateString()
+
 export const KEYS = [
   {
     code: '7',

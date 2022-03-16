@@ -16,11 +16,11 @@
 </template>
 
 <script>
-import { ref, watch, onMounted } from 'vue'
+import { watch, onMounted } from 'vue'
 
-import { getDailyChallenge } from './services/pi.js'
-import { useGame } from './services/game.js'
-import keyboard from './services/keyboard.js'
+import { useGame } from './application/game.js'
+import { useKeyboard } from './application/keyboard.js'
+import { useChallenge } from './application/challenge.js'
 
 import Guess from './components/Guess.vue'
 import Keyboard from './components/Keyboard.vue'
@@ -31,31 +31,37 @@ export default {
     Keyboard
   },
   setup() {
-    const challenge = ref('')
+    const { addKeyboardListener, destroyKeyboard } = useKeyboard()
 
     const {
-      won, guesses, results,
-      addDigit, removeDigit, guess
+      won, guess, guesses, results,
+      addDigit, removeDigit, addResult
     } = useGame()
 
+    const {
+      loadChallenge,
+      validateChallenge
+    } = useChallenge()
+
+    const validate = () => {
+      return validateChallenge(guess.value)
+    }
+
     const handlers = {
-      enter: (key, challenge) => guess(challenge),
+      enter: () => addResult(validate()),
       backspace: () => removeDigit(),
       default: (key) => addDigit(key)
     }
 
-    keyboard.subscribe(key => {
-      if (handlers[key])
-        handlers[key](key, challenge.value)
-      else
-        handlers['default'](key, challenge.value)
+    addKeyboardListener(key => {
+      (handlers[key] || handlers['default'])(key, guess.value)
     })
 
-    watch(won, (value) => value && keyboard.destroy(), { immediate: true })
+    watch(won, (value) => {
+      value && destroyKeyboard()
+    }, { immediate: true })
 
-    onMounted(async () => {
-      challenge.value = await getDailyChallenge()
-    })
+    onMounted(async () => await loadChallenge())
 
     return {
       guesses,

@@ -1,6 +1,7 @@
-import { computed, reactive, ref, unref, watch } from 'vue'
+import { computed, reactive, ref, unref, watch, watchEffect } from 'vue'
 
 import { Storage } from '../utils/storage'
+import { DATE } from '../utils/constants'
 
 const STATE_STORAGE_KEY = 'state'
 
@@ -13,6 +14,12 @@ export function useGame() {
 
   const row = ref(state?.x || 0)
   const column = ref(state?.y || 0)
+
+  const guess = computed(() => {
+    const x = unref(row)
+
+    return guesses[x]
+  })
 
   const isLineFull = computed(() => column.value > 4)
 
@@ -30,9 +37,7 @@ export function useGame() {
     if (/\d/.test(digit) && !isLineFull.value) {
       guesses[x][y] = digit
 
-      column.value += 1
-
-      saveState()
+      column.value = Math.min(column.value + 1, 5)
     }
   }
 
@@ -41,73 +46,39 @@ export function useGame() {
 
     guesses[x].pop()
 
-    column.value -= 1
-
-    saveState()
+    column.value = Math.max(0, column.value - 1)
   }
 
-  const guess = (challenge) => {
+  const addResult = (result) => {
     if (!isLineFull.value) return
 
     const x = unref(row)
 
-    results[x] = validate(challenge, guesses[x])
+    results[x] = result
 
     row.value += 1
-
-    saveState()
-  }
-
-  const validate = (challenge, guess) => {
-    const digitsMap = challenge.split('').reduce((object, value) => {
-      if (object[value])
-        object[value] += 1
-      else
-        object[value] = 1
-
-      return object
-    }, {})
-
-    const results = []
-
-    guess.forEach((value, index) => {
-      const digit = challenge[index]
-
-      if (value === digit) {
-        results[index] = 2
-        digitsMap[digit] -= 1
-      }
-    })
-
-    guess.forEach((value, index) => {
-      const ocurrences = digitsMap[value]
-
-      if (challenge.includes(value) && ocurrences > 0) {
-        results[index] = 1
-        digitsMap[value] -= 1
-      } else if (!results[index]) {
-        results[index] = 0
-      }
-    })
-
-    return results
+    column.value = 0
   }
 
   const saveState = () => {
+    const date = DATE
+
     const x = unref(row)
     const y = unref(column)
 
-    stateStorage.set({ x, y, guesses, results })
+    stateStorage.set({ date, x, y, guesses, results })
   }
 
-  watch(row, () => column.value = 0)
+  watch(row, () => saveState())
+  watch(column, () => saveState())
 
   return {
     won,
+    guess,
     guesses,
     results,
     addDigit,
     removeDigit,
-    guess
+    addResult
   }
 }

@@ -1,4 +1,5 @@
 import { sfold } from '../utils/sfold.js'
+import { DATE } from '../utils/constants.js'
 
 const CHALLENGE_SIZE = 5
 
@@ -10,8 +11,9 @@ async function getPI() {
 }
 
 export async function getDailyChallenge() {
+  const date = DATE
+
   const pi = await getPI()
-  const date = (new Date()).toDateString()
   const maxLength = pi.length - CHALLENGE_SIZE - 1
 
   const index = sfold(date, maxLength)
