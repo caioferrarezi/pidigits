@@ -1,22 +1,25 @@
 class Keyboard {
   constructor() {
-    this.watchers = []
-
-    window.addEventListener('keyup', ({ key }) => {
+    this._watchers = []
+    this._listener = ({ key }) => {
       this.notify(key.toLocaleLowerCase())
-    })
-  }
+    }
 
-  get instance() {
-    return this
+    window.addEventListener('keyup', this._listener)
   }
 
   subscribe(callback) {
-    this.watchers.push(callback)
+    this._watchers.push(callback)
   }
 
   notify(key) {
-    this.watchers.forEach(callback => callback(key))
+    this._watchers.forEach(callback => callback(key))
+  }
+
+  destroy() {
+    window.removeEventListener('keyup', this._listener)
+
+    this._watchers.length = 0
   }
 }
 

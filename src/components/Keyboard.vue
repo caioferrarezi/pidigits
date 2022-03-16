@@ -42,22 +42,24 @@ export default {
   margin: 3.2rem auto 0;
 
   grid-template:
-    "code7 code8 code9 backspace" 5.6rem
-    "code4 code5 code6 enter" 5.6rem
-    "code1 code2 code3 enter" 5.6rem
-    "code0 code0 code0 enter" 5.6rem
-    / 6.4rem 6.4rem 6.4rem 6.4rem;
+    "code7 code8 code9 backspace" 4rem
+    "code4 code5 code6 enter" 4rem
+    "code1 code2 code3 enter" 4rem
+    "code0 code0 code0 enter" 4rem
+    / 5.6rem 5.6rem 5.6rem 5.6rem;
 }
 
 .pi-keyboard__button {
   appearance: none;
   width: 100%;
   height: 100%;
-  font-size: 3.2rem;
+  font-size: 2.4rem;
+  font-weight: bold;
   color: var(--white-color);
   background-color: var(--light-gray-color);
   border: none;
   border-radius: 4px;
+  cursor: pointer;
 }
 
 .pi-keyboard__button.-code-0 { grid-area: code0; }
@@ -73,7 +75,26 @@ export default {
 .pi-keyboard__button.-code-enter { grid-area: enter; }
 .pi-keyboard__button.-code-backspace { grid-area: backspace; }
 
-.pi-keyboard__button:hover {
+.pi-keyboard__button:active {
   background-color: var(--gray-color);
+}
+
+@media screen and (min-width: 786px) {
+  .pi-keyboard {
+    grid-template:
+      "code7 code8 code9 backspace" 5.6rem
+      "code4 code5 code6 enter" 5.6rem
+      "code1 code2 code3 enter" 5.6rem
+      "code0 code0 code0 enter" 5.6rem
+      / 6.4rem 6.4rem 6.4rem 6.4rem;
+  }
+
+  .pi-keyboard__button {
+    font-size: 3.2rem;
+  }
+
+  .pi-keyboard__button:hover {
+    background-color: var(--gray-color);
+  }
 }
 </style>

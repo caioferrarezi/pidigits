@@ -1,12 +1,27 @@
-import { computed, reactive, ref, unref, watch } from "vue";
+import { computed, reactive, ref, unref, watch } from 'vue'
 
-export function useGuesses() {
-  const row = ref(0)
-  const column = ref(0)
+import { Storage } from '../utils/storage'
 
-  const guesses = reactive([[], [], [], [], []])
-  const results = reactive([[], [], [], [], []])
+const STATE_STORAGE_KEY = 'state'
+
+export function useGame() {
+  const stateStorage = new Storage(STATE_STORAGE_KEY)
+  const state = stateStorage.get()
+
+  const guesses = reactive(state?.guesses || [[], [], [], [], []])
+  const results = reactive(state?.results || [[], [], [], [], []])
+
+  const row = ref(state?.x || 0)
+  const column = ref(state?.y || 0)
+
   const isLineFull = computed(() => column.value > 4)
+
+  const won = computed(() => {
+    const x = unref(row) - 1
+    const result = results[x]
+
+    return !!result?.every(value => value === 2)
+  })
 
   const addDigit = (digit) => {
     const x = unref(row)
@@ -16,6 +31,8 @@ export function useGuesses() {
       guesses[x][y] = digit
 
       column.value += 1
+
+      saveState()
     }
   }
 
@@ -25,20 +42,24 @@ export function useGuesses() {
     guesses[x].pop()
 
     column.value -= 1
+
+    saveState()
   }
 
-  const guess = (digits) => {
+  const guess = (challenge) => {
     if (!isLineFull.value) return
 
     const x = unref(row)
 
-    results[x] = validate(digits, guesses[x])
+    results[x] = validate(challenge, guesses[x])
 
     row.value += 1
+
+    saveState()
   }
 
-  const validate = (digits, guess) => {
-    const digitsMap = digits.split('').reduce((object, value) => {
+  const validate = (challenge, guess) => {
+    const digitsMap = challenge.split('').reduce((object, value) => {
       if (object[value])
         object[value] += 1
       else
@@ -50,7 +71,7 @@ export function useGuesses() {
     const results = []
 
     guess.forEach((value, index) => {
-      const digit = digits[index]
+      const digit = challenge[index]
 
       if (value === digit) {
         results[index] = 2
@@ -61,7 +82,7 @@ export function useGuesses() {
     guess.forEach((value, index) => {
       const ocurrences = digitsMap[value]
 
-      if (digits.includes(value) && ocurrences > 0) {
+      if (challenge.includes(value) && ocurrences > 0) {
         results[index] = 1
         digitsMap[value] -= 1
       } else if (!results[index]) {
@@ -72,9 +93,17 @@ export function useGuesses() {
     return results
   }
 
+  const saveState = () => {
+    const x = unref(row)
+    const y = unref(column)
+
+    stateStorage.set({ x, y, guesses, results })
+  }
+
   watch(row, () => column.value = 0)
 
   return {
+    won,
     guesses,
     results,
     addDigit,

@@ -54,10 +54,10 @@ export default {
 .pi-input__digit {
   display: block;
   flex: 0 0 auto;
-  width: 8rem;
-  height: 8rem;
-  line-height: 7.8rem;
-  font-size: 3.2rem;
+  width: 5.8rem;
+  height: 5.8rem;
+  line-height: 5.4rem;
+  font-size: 2.4rem;
   font-weight: bold;
   text-align: center;
   appearance: none;
@@ -81,5 +81,14 @@ export default {
 .pi-input__digit.-red {
   background: var(--red-color);
   border-color: var(--red-color);
+}
+
+@media screen and (min-width: 786px) {
+  .pi-input__digit {
+    width: 6.4rem;
+    height: 6.4rem;
+    line-height: 6rem;
+    font-size: 3.2rem;
+  }
 }
 </style>

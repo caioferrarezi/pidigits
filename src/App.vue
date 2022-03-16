@@ -2,22 +2,24 @@
   <div class="pi-app">
     <h1 class="pi-title">PI Digits</h1>
 
-    <Guess
-      v-for="line in 5"
-      :key="line"
-      :guess="guesses[line - 1]"
-      :result="results[line - 1]"
-    />
+    <div class="pi-board">
+      <Guess
+        v-for="line in 5"
+        :key="line"
+        :guess="guesses[line - 1]"
+        :result="results[line - 1]"
+      />
+    </div>
 
     <Keyboard />
   </div>
 </template>
 
 <script>
-import { ref, onMounted, unref } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 
 import { getDailyChallenge } from './services/pi.js'
-import { useGuesses } from './services/guesses.js'
+import { useGame } from './services/game.js'
 import keyboard from './services/keyboard.js'
 
 import Guess from './components/Guess.vue'
@@ -31,23 +33,28 @@ export default {
   setup() {
     const challenge = ref('')
 
-    const { guesses, results, addDigit, removeDigit, guess } = useGuesses()
+    const {
+      won, guesses, results,
+      addDigit, removeDigit, guess
+    } = useGame()
 
     const handlers = {
-      enter: (key, digits) => guess(digits),
+      enter: (key, challenge) => guess(challenge),
       backspace: () => removeDigit(),
       default: (key) => addDigit(key)
     }
 
-    onMounted(async () => challenge.value = await getDailyChallenge())
-
     keyboard.subscribe(key => {
-      const digits = unref(challenge)
-
       if (handlers[key])
-        return handlers[key](key, digits)
+        handlers[key](key, challenge.value)
+      else
+        handlers['default'](key, challenge.value)
+    })
 
-      return handlers['default'](key, digits)
+    watch(won, (value) => value && keyboard.destroy(), { immediate: true })
+
+    onMounted(async () => {
+      challenge.value = await getDailyChallenge()
     })
 
     return {
@@ -61,15 +68,29 @@ export default {
 <style scoped>
 .pi-app {
   display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+  justify-content: center;
+  padding: 1.6rem 0;
+}
+
+.pi-board {
+  display: flex;
   flex-direction: column;
   gap: .8rem;
 }
 
 .pi-title {
   text-align: center;
-  font-size: 4.8rem;
+  font-size: 3.2rem;
   color: var(--white-color);
   margin: 0 0 1.6rem;
+}
+
+@media screen and (min-width: 786px) {
+  .pi-title {
+    font-size: 4rem;
+  }
 }
 </style>
 
@@ -100,7 +121,6 @@ html {
 body {
   background: var(--black-color);
   box-sizing: border-box;
-  padding: 6rem 0;
   font-size: 1.6rem;
 }
 </style>
