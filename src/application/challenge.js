@@ -20,10 +20,11 @@ export function useChallenge() {
 
   const validateChallenge = (guess) => {
     const answer = unref(challenge)
-    const ocurrences = unref(digitsMap)
+    const ocurrences = Object.assign({}, unref(digitsMap))
 
     const results = []
 
+    // Validate position
     guess.forEach((value, index) => {
       const digit = answer[index]
 
@@ -33,13 +34,16 @@ export function useChallenge() {
       }
     })
 
+    // Validate ocurrence
     guess.forEach((value, index) => {
       const appearance = ocurrences[value]
+
+      if (results[index]) return
 
       if (answer.includes(value) && appearance > 0) {
         results[index] = 1
         ocurrences[value] -= 1
-      } else if (!results[index]) {
+      } else {
         results[index] = 0
       }
     })

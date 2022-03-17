@@ -24,4 +24,10 @@ export class Storage {
 
     localStorage.setItem(this._key, value)
   }
+
+  clear() {
+    if (!localStorage) return
+
+    localStorage.removeItem(this._key)
+  }
 }

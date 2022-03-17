@@ -1,13 +1,26 @@
 import { computed, reactive, ref, unref, watch, watchEffect } from 'vue'
 
-import { Storage } from '../utils/storage'
 import { DATE } from '../utils/constants'
+import { Storage } from '../services/storage'
 
 const STATE_STORAGE_KEY = 'state'
+const stateStorage = new Storage(STATE_STORAGE_KEY)
+
+function pastDate() {
+  const state = stateStorage.get()
+
+  const actual = new Date(state?.date || null)
+  const today = new Date(new Date().toDateString())
+
+  return actual < today
+}
 
 export function useGame() {
-  const stateStorage = new Storage(STATE_STORAGE_KEY)
-  const state = stateStorage.get()
+  let state = {}
+
+  if (!pastDate()) {
+    state = stateStorage.get()
+  }
 
   const guesses = reactive(state?.guesses || [[], [], [], [], []])
   const results = reactive(state?.results || [[], [], [], [], []])
