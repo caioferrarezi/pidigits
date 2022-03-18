@@ -1,13 +1,10 @@
-import { computed, reactive, ref, unref, watch, watchEffect } from 'vue'
+import { reactive, toRefs, watch } from 'vue'
 
 import { DATE } from '../utils/constants'
-import { Storage } from '../services/storage'
-
-const STATE_STORAGE_KEY = 'state'
-const stateStorage = new Storage(STATE_STORAGE_KEY)
+import gameRepository from '../repositories/game'
 
 function pastDate() {
-  const state = stateStorage.get()
+  const state = gameRepository.state
 
   const actual = new Date(state?.date || null)
   const today = new Date(new Date().toDateString())
@@ -16,80 +13,61 @@ function pastDate() {
 }
 
 export function useGame() {
-  let state = {}
+  const isNewDay = pastDate()
 
-  if (!pastDate()) {
-    state = stateStorage.get()
+  const state = reactive(gameRepository.state || {})
+
+  if (isNewDay) {
+    state.date = DATE
+    state.row = 0
+    state.column = 0
+    state.guesses = [[], [], [], [], []]
+    state.results = [[], [], [], [], []]
   }
 
-  const guesses = reactive(state?.guesses || [[], [], [], [], []])
-  const results = reactive(state?.results || [[], [], [], [], []])
-
-  const row = ref(state?.x || 0)
-  const column = ref(state?.y || 0)
-
-  const guess = computed(() => {
-    const x = unref(row)
-
-    return guesses[x]
-  })
-
-  const isLineFull = computed(() => column.value > 4)
-
-  const won = computed(() => {
-    const x = unref(row) - 1
-    const result = results[x]
-
-    return !!result?.every(value => value === 2)
-  })
-
   const addDigit = (digit) => {
-    const x = unref(row)
-    const y = unref(column)
+    const isLineFull = state.column > 4
 
-    if (/\d/.test(digit) && !isLineFull.value) {
-      guesses[x][y] = digit
+    if (/\d/.test(digit) && !isLineFull) {
+      const { row, column } = state
 
-      column.value = Math.min(column.value + 1, 5)
+      state.guesses[row][column] = digit
+
+      state.column = Math.min(column + 1, 5)
     }
   }
 
   const removeDigit = () => {
-    const x = unref(row)
+    const { row, column } = state
 
-    guesses[x].pop()
+    state.guesses[row].pop()
 
-    column.value = Math.max(0, column.value - 1)
+    state.column = Math.max(0, column - 1)
   }
 
   const addResult = (result) => {
-    if (!isLineFull.value) return
+    const isLineFull = state.column > 4
 
-    const x = unref(row)
+    if (isLineFull) {
+      const { row } = state
 
-    results[x] = result
+      state.results[row] = result
 
-    row.value += 1
-    column.value = 0
+      state.row += 1
+      state.column = 0
+    }
   }
 
-  const saveState = () => {
-    const date = DATE
-
-    const x = unref(row)
-    const y = unref(column)
-
-    stateStorage.set({ date, x, y, guesses, results })
-  }
-
-  watch(row, () => saveState())
-  watch(column, () => saveState())
+  watch(
+    () => state,
+    (state) => {
+      gameRepository.save(state)
+    },
+    { deep: true }
+  )
 
   return {
-    won,
-    guess,
-    guesses,
-    results,
+    ...toRefs(state),
     addDigit,
     removeDigit,
     addResult

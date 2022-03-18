@@ -1,11 +1,16 @@
 <template>
-  <div class="pi-keyboard">
+  <div
+    :class="['pi-keyboard', {
+      'is-disabled': disabled
+    }]"
+  >
     <button
       v-for="key in keys"
       :key="key.code"
       :class="[
         'pi-keyboard__button',
-        `-code-${key.code}`
+        `-code-${key.code}`,
+        { 'is-disabled': key.disabled }
       ]"
       @click="handleClick(key.code)"
     >
@@ -15,17 +20,27 @@
 </template>
 
 <script>
-import { readonly } from 'vue'
+import { computed } from 'vue'
 import { KEYS } from '../utils/constants'
-import keyboard from '../services/keyboard'
+import { useKeyboard } from '../application/keyboard'
 
 export default {
-  setup() {
-    const keys = readonly(KEYS)
-
-    const handleClick = (key) => {
-      keyboard.notify(key)
+  props: {
+    disabled: {
+      type: Boolean,
+      default: false
     }
+  },
+  setup() {
+    const { disabledKeys, notifyKeyboard } = useKeyboard()
+
+    const keys = computed(
+      () => KEYS.map(key => {
+        return { ...key, disabled: disabledKeys.value.includes(key.code) }
+      })
+    )
+
+    const handleClick = notifyKeyboard
 
     return {
       keys,
@@ -39,27 +54,37 @@ export default {
 .pi-keyboard {
   display: grid;
   gap: .8rem;
-  margin: 3.2rem auto 0;
+  margin: 1.6rem auto 0;
 
   grid-template:
-    "code7 code8 code9 backspace" 4rem
-    "code4 code5 code6 enter" 4rem
-    "code1 code2 code3 enter" 4rem
-    "code0 code0 code0 enter" 4rem
-    / 5.6rem 5.6rem 5.6rem 5.6rem;
+    "code7 code8 code9 backspace" 3.2rem
+    "code4 code5 code6 enter" 3.2rem
+    "code1 code2 code3 enter" 3.2rem
+    "code0 code0 code0 enter" 3.2rem
+    / 4.8rem 4.8rem 4.8rem 4.8rem;
 }
 
 .pi-keyboard__button {
   appearance: none;
   width: 100%;
   height: 100%;
-  font-size: 2.4rem;
+  font-size: 1.6rem;
   font-weight: bold;
   color: var(--white-color);
   background-color: var(--light-gray-color);
   border: none;
   border-radius: 4px;
   cursor: pointer;
+}
+
+.pi-keyboard__button:active {
+  background-color: var(--gray-color);
+}
+
+.pi-keyboard__button.is-disabled,
+.pi-keyboard.is-disabled .pi-keyboard__button {
+  opacity: 0.3;
+  pointer-events: none;
 }
 
 .pi-keyboard__button.-code-0 { grid-area: code0; }
@@ -75,8 +100,21 @@ export default {
 .pi-keyboard__button.-code-enter { grid-area: enter; }
 .pi-keyboard__button.-code-backspace { grid-area: backspace; }
 
-.pi-keyboard__button:active {
-  background-color: var(--gray-color);
+@media screen and (min-width: 375px) {
+  .pi-keyboard {
+    margin: 3.2rem auto 0;
+
+    grid-template:
+      "code7 code8 code9 backspace" 4rem
+      "code4 code5 code6 enter" 4rem
+      "code1 code2 code3 enter" 4rem
+      "code0 code0 code0 enter" 4rem
+      / 5.6rem 5.6rem 5.6rem 5.6rem;
+  }
+
+  .pi-keyboard__button {
+    font-size: 2.4rem;
+  }
 }
 
 @media screen and (min-width: 786px) {

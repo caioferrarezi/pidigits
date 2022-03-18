@@ -1,6 +1,11 @@
 export class Storage {
   constructor(key) {
     this._key = key
+    this._watchers = []
+  }
+
+  get state() {
+    return this.get()
   }
 
   get() {
@@ -23,11 +28,27 @@ export class Storage {
     }
 
     localStorage.setItem(this._key, value)
+
+    this.notify()
+  }
+
+  subscribe(callback, options = {}) {
+    this._watchers.push(callback)
+
+    if (options.immediate) {
+      this.notify()
+    }
+  }
+
+  notify() {
+    this._watchers.forEach(callback => callback(this.state))
   }
 
   clear() {
     if (!localStorage) return
 
     localStorage.removeItem(this._key)
+
+    this.notify()
   }
 }

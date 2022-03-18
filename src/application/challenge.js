@@ -1,8 +1,9 @@
-import { computed, ref, unref } from 'vue'
+import { ref, unref, computed } from 'vue'
 import { getDailyChallenge } from '../services/challenge.js'
 
 export function useChallenge() {
   const challenge = ref('')
+
   const digitsMap = computed(
     () => challenge.value.split('').reduce((object, value) => {
       if (object[value])
@@ -22,14 +23,15 @@ export function useChallenge() {
     const answer = unref(challenge)
     const ocurrences = Object.assign({}, unref(digitsMap))
 
-    const results = []
+    const result = []
+    const invalidDigits = new Set()
 
     // Validate position
     guess.forEach((value, index) => {
       const digit = answer[index]
 
       if (value === digit) {
-        results[index] = 2
+        result[index] = 2
         ocurrences[digit] -= 1
       }
     })
@@ -37,18 +39,21 @@ export function useChallenge() {
     // Validate ocurrence
     guess.forEach((value, index) => {
       const appearance = ocurrences[value]
+      const hasValue = answer.includes(value)
 
-      if (results[index]) return
+      if (result[index]) return
 
-      if (answer.includes(value) && appearance > 0) {
-        results[index] = 1
+      if (hasValue && appearance > 0) {
+        result[index] = 1
         ocurrences[value] -= 1
       } else {
-        results[index] = 0
+        result[index] = 0
       }
+
+      if (!hasValue) invalidDigits.add(value)
     })
 
-    return results
+    return [result, Array.from(invalidDigits)]
   }
 
   return {

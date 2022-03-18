@@ -45,7 +45,7 @@ export default {
 <style scoped>
 .pi-input {
   display: flex;
-  gap: .8rem;
+  gap: .4rem;
   width: 100%;
   margin: auto;
   justify-content: center;
@@ -54,9 +54,9 @@ export default {
 .pi-input__digit {
   display: block;
   flex: 0 0 auto;
-  width: 5.8rem;
-  height: 5.8rem;
-  line-height: 5.4rem;
+  width: 4rem;
+  height: 4rem;
+  line-height: 3.6rem;
   font-size: 2.4rem;
   font-weight: bold;
   text-align: center;
@@ -83,7 +83,28 @@ export default {
   border-color: var(--red-color);
 }
 
+@media screen and (min-width: 375px) {
+  .pi-input__digit {
+    width: 4.8rem;
+    height: 4.8rem;
+    line-height: 4.4rem;
+  }
+}
+
+@media screen and (min-width: 420px) {
+  .pi-input__digit {
+    width: 5.6rem;
+    height: 5.6rem;
+    line-height: 5.4rem;
+    font-size: 3.2rem;
+  }
+}
+
 @media screen and (min-width: 786px) {
+  .pi-input {
+    gap: .8rem;
+  }
+
   .pi-input__digit {
     width: 6.4rem;
     height: 6.4rem;

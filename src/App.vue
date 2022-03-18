@@ -11,12 +11,12 @@
       />
     </div>
 
-    <Keyboard />
+    <Keyboard :disabled="won" />
   </div>
 </template>
 
 <script>
-import { watch, onMounted } from 'vue'
+import { watch, onMounted, computed } from 'vue'
 
 import { useGame } from './application/game.js'
 import { useKeyboard } from './application/keyboard.js'
@@ -31,10 +31,14 @@ export default {
     Keyboard
   },
   setup() {
-    const { addKeyboardListener, destroyKeyboard } = useKeyboard()
+    const {
+      setDisabledKeys,
+      addKeyboardListener,
+      destroyKeyboard
+    } = useKeyboard()
 
     const {
-      won, guess, guesses, results,
+      row, guesses, results,
       addDigit, removeDigit, addResult
     } = useGame()
 
@@ -43,14 +47,30 @@ export default {
       validateChallenge
     } = useChallenge()
 
+    const guess = computed(() => guesses.value[row.value])
+    const result = computed(() => results.value[row.value - 1])
+
+    const won = computed(() => !!result.value?.every(value => value === 2))
+
+    const add = (key) => {
+      addDigit(key)
+    }
+
+    const remove = () => {
+      removeDigit()
+    }
+
     const validate = () => {
-      return validateChallenge(guess.value)
+      const [result, invalidDigits] = validateChallenge(guess.value)
+
+      addResult(result)
+      setDisabledKeys(invalidDigits)
     }
 
     const handlers = {
-      enter: () => addResult(validate()),
-      backspace: () => removeDigit(),
-      default: (key) => addDigit(key)
+      default: add,
+      backspace: remove,
+      enter: validate
     }
 
     addKeyboardListener(key => {
@@ -64,6 +84,7 @@ export default {
     onMounted(async () => await loadChallenge())
 
     return {
+      won,
       guesses,
       results
     }
@@ -74,26 +95,41 @@ export default {
 <style scoped>
 .pi-app {
   display: flex;
-  min-height: 100vh;
+  height: 100vh;
   flex-direction: column;
   justify-content: center;
-  padding: 1.6rem 0;
+  padding: .8rem 0;
 }
 
 .pi-board {
   display: flex;
   flex-direction: column;
-  gap: .8rem;
+  gap: .4rem;
 }
 
 .pi-title {
   text-align: center;
-  font-size: 3.2rem;
+  font-size: 2.4rem;
   color: var(--white-color);
   margin: 0 0 1.6rem;
 }
 
+@media screen and (min-width: 375px) {
+  .pi-app {
+    padding: 1.6rem 0;
+  }
+
+  .pi-title {
+    font-size: 3.2rem;
+    margin: 0 0 1.6rem;
+  }
+}
+
 @media screen and (min-width: 786px) {
+  .pi-board {
+    gap: .8rem;
+  }
+
   .pi-title {
     font-size: 4rem;
   }
