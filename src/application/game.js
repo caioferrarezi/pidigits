@@ -1,29 +1,13 @@
 import { reactive, toRefs, watch } from 'vue'
 
-import { DATE } from '../utils/constants'
 import gameRepository from '../repositories/game'
 
-function pastDate() {
-  const state = gameRepository.state
-
-  const actual = new Date(state?.date || null)
-  const today = new Date(new Date().toDateString())
-
-  return actual < today
-}
+import { useGlobalState } from './global'
 
 export function useGame() {
-  const isNewDay = pastDate()
+  const { hasPassedDate } = useGlobalState()
 
   const state = reactive(gameRepository.state || {})
-
-  if (isNewDay) {
-    state.date = DATE
-    state.row = 0
-    state.column = 0
-    state.guesses = [[], [], [], [], []]
-    state.results = [[], [], [], [], []]
-  }
 
   const addDigit = (digit) => {
     const isLineFull = state.column > 4
@@ -64,6 +48,19 @@ export function useGame() {
       gameRepository.save(state)
     },
     { deep: true }
+  )
+
+  watch(
+    hasPassedDate,
+    (value) => {
+      if (!value) return
+
+      state.row = 0
+      state.column = 0
+      state.guesses = [[], [], [], [], []]
+      state.results = [[], [], [], [], []]
+    },
+    { immediate: true }
   )
 
   return {
